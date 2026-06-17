@@ -7,6 +7,10 @@ use App\Livewire\Workouts;
 use App\Livewire\ManualLogs;
 use App\Livewire\Leaderboard;
 
+Route::get('/healthz', function () {
+    return response('OK', 200);
+});
+
 Route::redirect('/', '/login')->name('home');
 
 // Simulated OAuth Login callback
