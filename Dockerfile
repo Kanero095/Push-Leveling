@@ -77,5 +77,5 @@ RUN chown -R www-data:www-data storage bootstrap/cache \
 # Expose port 80 (or $PORT at runtime)
 EXPOSE 80
 
-# Start command: run migrations, cache config, and start Apache
-CMD php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache && apache2-foreground
+# Start command: run migrations, link storage, cache config, and start Apache
+CMD php artisan migrate --force && php artisan storage:link && php artisan config:cache && php artisan route:cache && php artisan view:cache && apache2-foreground
