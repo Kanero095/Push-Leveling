@@ -1,15 +1,23 @@
-# STAGE 1: Build Frontend Assets
+# STAGE 1: Install Composer Dependencies
+FROM composer:2 AS composer-builder
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-interaction --optimize-autoloader
+
+# STAGE 2: Build Frontend Assets
 FROM node:20-slim AS frontend-builder
 WORKDIR /app
 COPY package.json ./
 RUN npm install
 COPY . .
+# Copy vendor folder from composer-builder so Vite can resolve Flux CSS
+COPY --from=composer-builder /app/vendor ./vendor
 RUN npm run build
 
-# STAGE 2: Build Backend & Production Image
+# STAGE 3: Build Backend & Production Image
 FROM php:8.3-apache
 
-# Install PHP dependencies & libraries (combining both setups)
+# Install PHP dependencies & libraries
 RUN apt-get update && apt-get install -y \
     unzip \
     curl \
@@ -22,18 +30,18 @@ RUN apt-get update && apt-get install -y \
     zip \
     && rm -rf /var/lib/apt/lists/*
 
-# Configure & install PHP extensions (including pdo, pdo_mysql, gd, pdo_pgsql, pgsql, etc.)
+# Configure & install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
-    pdo \
-    pdo_mysql \
-    gd \
-    pdo_pgsql \
-    pgsql \
-    bcmath \
-    intl \
-    zip \
-    opcache
+        pdo \
+        pdo_mysql \
+        gd \
+        pdo_pgsql \
+        pgsql \
+        bcmath \
+        intl \
+        zip \
+        opcache
 
 # Enable Apache modules (rewrite, headers)
 RUN a2enmod rewrite headers
@@ -44,12 +52,15 @@ WORKDIR /var/www/html
 # Copy project files
 COPY . /var/www/html
 
-# Copy built frontend assets from STAGE 1
+# Copy composer vendor from STAGE 1
+COPY --from=composer-builder /app/vendor /var/www/html/vendor
+
+# Copy built frontend assets from STAGE 2
 COPY --from=frontend-builder /app/public/build /var/www/html/public/build
 
-# Install Composer dependencies
+# Install Composer binary & dump autoloader
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN composer dump-autoload --optimize --no-dev --classmap-authoritative
 
 # Apache DocumentRoot → public/ (using your working configuration)
 RUN sed -i 's#/var/www/html#/var/www/html/public#g' /etc/apache2/sites-available/000-default.conf
