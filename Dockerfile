@@ -9,64 +9,57 @@ RUN npm run build
 # STAGE 2: Build Backend & Production Image
 FROM php:8.3-apache
 
-# Install system dependencies & Postgres development libraries
+# Install PHP dependencies & libraries (combining both setups)
 RUN apt-get update && apt-get install -y \
-    git \
+    unzip \
     curl \
     libpng-dev \
-    libjpeg-dev \
+    libjpeg62-turbo-dev \
     libfreetype6-dev \
     libpq-dev \
     libzip-dev \
     libicu-dev \
-    unzip \
     zip \
     && rm -rf /var/lib/apt/lists/*
 
-# Configure & install PHP extensions
+# Configure & install PHP extensions (including pdo, pdo_mysql, gd, pdo_pgsql, pgsql, etc.)
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
-        pdo_pgsql \
-        bcmath \
-        gd \
-        intl \
-        zip \
-        opcache
+    pdo \
+    pdo_mysql \
+    gd \
+    pdo_pgsql \
+    pgsql \
+    bcmath \
+    intl \
+    zip \
+    opcache
 
-# Enable Apache rewrite module
-RUN a2enmod rewrite
-
-# Set Apache document root to Laravel's public folder
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
-
-# Configure Apache to listen on Render's dynamic $PORT (defaults to 10000)
-ENV PORT=10000
-RUN sed -s -i -e "s/Listen 80/Listen \${PORT}/" /etc/apache2/ports.conf
-RUN sed -s -i -e "s/<VirtualHost \*:80>/<VirtualHost *:\${PORT}>/" /etc/apache2/sites-available/*.conf
-
-# Install Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# Enable Apache modules (rewrite, headers)
+RUN a2enmod rewrite headers
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy project files (excluding things in .dockerignore)
-COPY . .
+# Copy project files
+COPY . /var/www/html
 
 # Copy built frontend assets from STAGE 1
-COPY --from=frontend-builder /app/public/build ./public/build
+COPY --from=frontend-builder /app/public/build /var/www/html/public/build
 
-# Install PHP dependencies for production
+# Install Composer dependencies
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Adjust folder permissions for Laravel
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# Apache DocumentRoot → public/ (using your working configuration)
+RUN sed -i 's#/var/www/html#/var/www/html/public#g' /etc/apache2/sites-available/000-default.conf
 
-# Expose port
-EXPOSE 10000
+# Set permissions for storage & cache
+RUN chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+# Expose port 80 (Render automatically detects this and maps public traffic)
+EXPOSE 80
 
 # Start command: run migrations, cache config, and start Apache
 CMD php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache && apache2-foreground
