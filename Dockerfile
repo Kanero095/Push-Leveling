@@ -65,11 +65,16 @@ RUN composer dump-autoload --optimize --no-dev --classmap-authoritative
 # Apache DocumentRoot → public/ (using your working configuration)
 RUN sed -i 's#/var/www/html#/var/www/html/public#g' /etc/apache2/sites-available/000-default.conf
 
+# Configure Apache to listen on Render's dynamic $PORT (defaults to 80)
+ENV PORT=80
+RUN sed -s -i -e "s/Listen 80/Listen \${PORT}/" /etc/apache2/ports.conf
+RUN sed -s -i -e "s/<VirtualHost \*:80>/<VirtualHost *:\${PORT}>/" /etc/apache2/sites-available/000-default.conf
+
 # Set permissions for storage & cache
 RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Expose port 80 (Render automatically detects this and maps public traffic)
+# Expose port 80 (or $PORT at runtime)
 EXPOSE 80
 
 # Start command: run migrations, cache config, and start Apache
