@@ -68,5 +68,5 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Expose port
 EXPOSE 10000
 
-# Start command: cache config & start Apache
-CMD php artisan config:cache && php artisan route:cache && php artisan view:cache && apache2-foreground
+# Start command: run migrations, cache config, and start Apache
+CMD php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache && apache2-foreground
