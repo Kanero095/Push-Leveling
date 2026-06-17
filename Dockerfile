@@ -33,15 +33,15 @@ RUN apt-get update && apt-get install -y \
 # Configure & install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
-        pdo \
-        pdo_mysql \
-        gd \
-        pdo_pgsql \
-        pgsql \
-        bcmath \
-        intl \
-        zip \
-        opcache
+    pdo \
+    pdo_mysql \
+    gd \
+    pdo_pgsql \
+    pgsql \
+    bcmath \
+    intl \
+    zip \
+    opcache
 
 # Enable Apache modules (rewrite, headers)
 RUN a2enmod rewrite headers
