@@ -1,8 +1,23 @@
-FROM php:8.2-apache
+# STAGE 1: Install Composer Dependencies
+FROM composer:2 AS composer-builder
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-interaction --optimize-autoloader
 
-# ------------------------------------------------------
-# 1. Install PHP dependencies
-# ------------------------------------------------------
+# STAGE 2: Build Frontend Assets
+FROM node:20-slim AS frontend-builder
+WORKDIR /app
+COPY package.json ./
+RUN npm install
+COPY . .
+# Copy vendor folder from composer-builder so Vite can resolve Flux CSS
+COPY --from=composer-builder /app/vendor ./vendor
+RUN npm run build
+
+# STAGE 3: Build Backend & Production Image
+FROM php:8.3-apache
+
+# Install PHP dependencies & libraries
 RUN apt-get update && apt-get install -y \
     unzip \
     curl \
@@ -10,39 +25,52 @@ RUN apt-get update && apt-get install -y \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
     libpq-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo pdo_mysql gd pdo_pgsql pgsql
+    libzip-dev \
+    libicu-dev \
+    zip \
+    && rm -rf /var/lib/apt/lists/*
 
-# Enable Apache modules
+# Configure & install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
+    pdo \
+    pdo_mysql \
+    gd \
+    pdo_pgsql \
+    pgsql \
+    bcmath \
+    intl \
+    zip \
+    opcache
+
+# Enable Apache modules (rewrite, headers)
 RUN a2enmod rewrite headers
 
-# ------------------------------------------------------
-# 2. Set working directory
-# ------------------------------------------------------
+# Set working directory
 WORKDIR /var/www/html
 
-# ------------------------------------------------------
-# 3. Copy project
-# ------------------------------------------------------
+# Copy project files
 COPY . /var/www/html
 
-# ------------------------------------------------------
-# 4. Install Composer dependencies
-# ------------------------------------------------------
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-RUN composer install --no-dev --optimize-autoloader
+# Copy composer vendor from STAGE 1
+COPY --from=composer-builder /app/vendor /var/www/html/vendor
 
-# ------------------------------------------------------
-# 5. Apache DocumentRoot → public/
-# ------------------------------------------------------
+# Copy built frontend assets from STAGE 2
+COPY --from=frontend-builder /app/public/build /var/www/html/public/build
+
+# Install Composer binary & dump autoloader
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+RUN composer dump-autoload --optimize --no-dev --classmap-authoritative
+
+# Apache DocumentRoot → public/ (using your working configuration)
 RUN sed -i 's#/var/www/html#/var/www/html/public#g' /etc/apache2/sites-available/000-default.conf
 
-# ------------------------------------------------------
-# 6. Permissions
-# ------------------------------------------------------
+# Set permissions for storage & cache
 RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
+# Expose port 80 (Render automatically detects this and maps public traffic)
 EXPOSE 80
 
-CMD ["apache2-foreground"]
+# Start command: run migrations, cache config, and start Apache
+CMD php artisan migrate --force && php artisan config:cache && php artisan route:cache && php artisan view:cache && apache2-foreground
