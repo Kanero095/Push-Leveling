@@ -9,10 +9,23 @@ use Livewire\Livewire;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    $this->originalCronSecret = $_ENV['CRON_SECRET'] ?? env('CRON_SECRET');
     $this->user = User::factory()->create([
         'name' => 'Athlete Test',
         'email' => 'athlete@example.com',
     ]);
+});
+
+afterEach(function () {
+    if ($this->originalCronSecret !== null) {
+        $_ENV['CRON_SECRET'] = $this->originalCronSecret;
+        $_SERVER['CRON_SECRET'] = $this->originalCronSecret;
+        putenv("CRON_SECRET={$this->originalCronSecret}");
+    } else {
+        unset($_ENV['CRON_SECRET']);
+        unset($_SERVER['CRON_SECRET']);
+        putenv('CRON_SECRET=');
+    }
 });
 
 test('guest is redirected to login for notifications page', function () {
@@ -26,6 +39,8 @@ test('authenticated user can visit notifications page', function () {
 });
 
 test('cron webhook without CRON_SECRET configured returns 500', function () {
+    $_ENV['CRON_SECRET'] = '';
+    $_SERVER['CRON_SECRET'] = '';
     putenv('CRON_SECRET='); // Clear secret
 
     $response = $this->getJson('/api/cron?token=some_token');
@@ -34,6 +49,8 @@ test('cron webhook without CRON_SECRET configured returns 500', function () {
 });
 
 test('cron webhook with invalid token returns 403', function () {
+    $_ENV['CRON_SECRET'] = 'super_secret_token';
+    $_SERVER['CRON_SECRET'] = 'super_secret_token';
     putenv('CRON_SECRET=super_secret_token');
 
     $response = $this->getJson('/api/cron?token=wrong_token');
@@ -42,6 +59,8 @@ test('cron webhook with invalid token returns 403', function () {
 });
 
 test('cron webhook with valid token run schedule:run returns success', function () {
+    $_ENV['CRON_SECRET'] = 'super_secret_token';
+    $_SERVER['CRON_SECRET'] = 'super_secret_token';
     putenv('CRON_SECRET=super_secret_token');
 
     $response = $this->getJson('/api/cron?token=super_secret_token');
@@ -50,6 +69,8 @@ test('cron webhook with valid token run schedule:run returns success', function 
 });
 
 test('cron webhook with unwhitelisted command returns 400', function () {
+    $_ENV['CRON_SECRET'] = 'super_secret_token';
+    $_SERVER['CRON_SECRET'] = 'super_secret_token';
     putenv('CRON_SECRET=super_secret_token');
 
     $response = $this->getJson('/api/cron?token=super_secret_token&command=migrate:fresh');

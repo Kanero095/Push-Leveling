@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 
 // Inspiring quote command
@@ -93,4 +94,4 @@ Artisan::command('notifications:evening', function () {
 
 Schedule::command('missions:generate')->dailyAt('00:00');
 Schedule::command('notifications:morning')->dailyAt('06:00');
-Schedule::command('notifications:evening')->dailyAt('20:00');
+Schedule::command('notifications:evening')->dailyAt('22:36');
