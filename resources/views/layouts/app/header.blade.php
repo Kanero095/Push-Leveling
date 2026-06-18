@@ -27,6 +27,16 @@
             <flux:spacer />
 
             <flux:navbar class="me-1.5 space-x-0.5 rtl:space-x-reverse py-0!">
+                @php
+                    $unreadCount = auth()->check() ? auth()->user()->notifications()->where('is_read', false)->count() : 0;
+                @endphp
+                <flux:tooltip :content="__('Notifications')" position="bottom">
+                    <flux:navbar.item class="relative !h-10 [&>div>svg]:size-5" icon="bell" href="{{ route('notifications') }}" :label="__('Notifications')">
+                        @if($unreadCount > 0)
+                            <div class="absolute top-2.5 right-2.5 size-2 rounded-full bg-red-500 ring-2 ring-zinc-50 dark:ring-zinc-900 animate-pulse"></div>
+                        @endif
+                    </flux:navbar.item>
+                </flux:tooltip>
                 <flux:tooltip :content="__('Search')" position="bottom">
                     <flux:navbar.item class="!h-10 [&>div>svg]:size-5" icon="magnifying-glass" href="#" :label="__('Search')" />
                 </flux:tooltip>

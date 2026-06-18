@@ -39,7 +39,10 @@ class UserMission extends Model
      */
     public function getProgressPercentageAttribute(): int
     {
-        if ($this->target_snapshot <= 0) return 0;
+        if ($this->target_snapshot <= 0) {
+            return 0;
+        }
+
         return min(100, round(($this->current_progress / $this->target_snapshot) * 100));
     }
 }

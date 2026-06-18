@@ -42,21 +42,23 @@ class Workout extends Model
      */
     public function getEmbedUrlAttribute(): ?string
     {
-        if (!$this->video_url) return null;
-        
+        if (! $this->video_url) {
+            return null;
+        }
+
         $urlParts = parse_url($this->video_url);
-        
+
         if (isset($urlParts['query'])) {
             parse_str($urlParts['query'], $queryParts);
             if (isset($queryParts['v'])) {
-                return "https://www.youtube.com/embed/" . $queryParts['v'];
+                return 'https://www.youtube.com/embed/'.$queryParts['v'];
             }
         }
-        
+
         if (isset($urlParts['path'])) {
             $pathParts = explode('/', trim($urlParts['path'], '/'));
             if (count($pathParts) > 0 && (str_contains($urlParts['host'] ?? '', 'youtu.be') || str_contains($urlParts['host'] ?? '', 'youtube.com'))) {
-                return "https://www.youtube.com/embed/" . end($pathParts);
+                return 'https://www.youtube.com/embed/'.end($pathParts);
             }
         }
 

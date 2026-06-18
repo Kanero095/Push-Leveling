@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\User;
 use App\Models\Mission;
+use App\Models\User;
 use App\Models\UserMission;
 use App\Models\WeeklyProgress;
 use Carbon\Carbon;
@@ -33,7 +33,7 @@ class DailyResetService
 
             // Determine if Hell Mode is active for today
             $multiplier = 1.0;
-            if ($weeklyProgress->hell_mode_ready && !$weeklyProgress->hell_mode_used) {
+            if ($weeklyProgress->hell_mode_ready && ! $weeklyProgress->hell_mode_used) {
                 $multiplier = 2.0;
                 // Update weekly progress to show hell mode has been activated
                 $weeklyProgress->hell_mode_used = true;

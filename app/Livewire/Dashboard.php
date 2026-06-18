@@ -4,6 +4,8 @@ namespace App\Livewire;
 
 use App\Models\UserMission;
 use App\Models\WeeklyProgress;
+use App\Models\Workout;
+use App\Models\WorkoutLog;
 use App\Services\DailyResetService;
 use App\Services\WorkoutService;
 use Carbon\Carbon;
@@ -13,14 +15,21 @@ use Livewire\Component;
 class Dashboard extends Component
 {
     public $user;
+
     public $weeklyProgress;
+
     public $aiRecommendation = '';
+
     public $aiMood = 'normal'; // normal, pumped, warning, celebratory
 
     public $timeframe = 'weekly';
+
     public $selectedType = 'all';
+
     public $chartLabels = [];
+
     public $chartRepsValues = [];
+
     public $chartXpValues = [];
 
     public function mount()
@@ -35,7 +44,7 @@ class Dashboard extends Component
         $this->user->refresh();
 
         // 1. Ensure daily missions exist
-        $workoutService = new WorkoutService();
+        $workoutService = new WorkoutService;
         $workoutService->ensureMissionsExistForToday($this->user);
 
         // 2. Fetch weekly progress
@@ -66,11 +75,11 @@ class Dashboard extends Component
         $classification = strtolower($this->user->user_level);
         $level = $this->user->level;
         $tier = $this->user->getTier();
-        
+
         $missions = $this->dailyMissions;
         $completedCount = $missions->where('is_completed', true)->count();
         $allCompleted = $completedCount === $missions->count() && $missions->count() > 0;
-        
+
         $isHellModeActive = false;
         if ($missions->isNotEmpty()) {
             $pushUpMission = $missions->firstWhere('mission.type', 'push_up');
@@ -81,38 +90,40 @@ class Dashboard extends Component
 
         if ($isHellModeActive) {
             $this->aiMood = 'warning';
-            $this->aiRecommendation = "💀 HELL MODE AKTIF! Target latihan hari ini dilipatgandakan (2x). Ini adalah ujian konsistensi sejati. Pusatkan pikiranmu, lakukan pemanasan secara menyeluruh, dan taklukkan batas kemampuanmu hari ini!";
+            $this->aiRecommendation = '💀 HELL MODE AKTIF! Target latihan hari ini dilipatgandakan (2x). Ini adalah ujian konsistensi sejati. Pusatkan pikiranmu, lakukan pemanasan secara menyeluruh, dan taklukkan batas kemampuanmu hari ini!';
+
             return;
         }
 
         if ($allCompleted) {
             $this->aiMood = 'celebratory';
-            $this->aiRecommendation = "🎉 LUAR BIASA! Kamu telah menyelesaikan semua Daily Mission hari ini! Tubuhmu sedang berkembang pesat. Istirahatlah dengan cukup, konsumsi protein, dan mari kita mendominasi lagi esok hari!";
+            $this->aiRecommendation = '🎉 LUAR BIASA! Kamu telah menyelesaikan semua Daily Mission hari ini! Tubuhmu sedang berkembang pesat. Istirahatlah dengan cukup, konsumsi protein, dan mari kita mendominasi lagi esok hari!';
+
             return;
         }
 
         $workoutTips = [
-            'beginner' => "Karena kamu diklasifikasikan sebagai **Beginner**, kami sarankan melakukan **Knee Push-ups** dan **Light Jogging** terlebih dahulu. Fokus pada form gerakan yang benar daripada kecepatan.",
-            'intermediate' => "Sebagai user **Intermediate**, kamu siap menghadapi tantangan penuh. Coba lakukan **Standard Push-ups** dengan tempo lambat (3 detik turun, 1 detik naik) untuk memaksimalkan kekuatan otot.",
-            'advanced' => "Bagi petarung kelas **Advanced**, tantang dirimu dengan **Diamond/Pistol Squats** dan **Sprint Interval Training**. Jaga intensitas tinggi untuk mendorong melampaui batas lamamu!"
+            'beginner' => 'Karena kamu diklasifikasikan sebagai **Beginner**, kami sarankan melakukan **Knee Push-ups** dan **Light Jogging** terlebih dahulu. Fokus pada form gerakan yang benar daripada kecepatan.',
+            'intermediate' => 'Sebagai user **Intermediate**, kamu siap menghadapi tantangan penuh. Coba lakukan **Standard Push-ups** dengan tempo lambat (3 detik turun, 1 detik naik) untuk memaksimalkan kekuatan otot.',
+            'advanced' => 'Bagi petarung kelas **Advanced**, tantang dirimu dengan **Diamond/Pistol Squats** dan **Sprint Interval Training**. Jaga intensitas tinggi untuk mendorong melampaui batas lamamu!',
         ];
 
         $tip = $workoutTips[$classification] ?? $workoutTips['beginner'];
         $xpProgress = $this->user->xp_progress;
         $xpNeeded = $xpProgress['target'] - $xpProgress['current'];
-        
+
         if ($xpNeeded < 80) {
             $this->aiMood = 'pumped';
-            $this->aiRecommendation = "🔥 KAMU SUDAH DEKAT! Hanya butuh {$xpNeeded} XP lagi untuk naik ke Level " . ($level + 1) . ". Selesaikan satu set latihan lagi sekarang untuk klaim kenaikan levelmu! " . $tip;
+            $this->aiRecommendation = "🔥 KAMU SUDAH DEKAT! Hanya butuh {$xpNeeded} XP lagi untuk naik ke Level ".($level + 1).'. Selesaikan satu set latihan lagi sekarang untuk klaim kenaikan levelmu! '.$tip;
         } else {
             $this->aiMood = 'normal';
-            $this->aiRecommendation = "Selamat datang kembali, Champion. Tingkat tier kamu saat ini adalah **{$tier}**. Hari ini kamu telah menyelesaikan {$completedCount}/4 misi harian. " . $tip;
+            $this->aiRecommendation = "Selamat datang kembali, Champion. Tingkat tier kamu saat ini adalah **{$tier}**. Hari ini kamu telah menyelesaikan {$completedCount}/4 misi harian. ".$tip;
         }
     }
 
     public function simulateMissionCompletion()
     {
-        if (!$this->user || !$this->user->is_admin) {
+        if (! $this->user || ! $this->user->is_admin) {
             abort(403, 'Unauthorized');
         }
 
@@ -123,7 +134,7 @@ class Dashboard extends Component
             $userMission->save();
         }
 
-        $workoutService = new WorkoutService();
+        $workoutService = new WorkoutService;
         $workoutService->updateWeeklyProgress($this->user);
 
         $this->loadData();
@@ -132,11 +143,11 @@ class Dashboard extends Component
 
     public function toggleHellModeReady()
     {
-        if (!$this->user || !$this->user->is_admin) {
+        if (! $this->user || ! $this->user->is_admin) {
             abort(403, 'Unauthorized');
         }
 
-        $this->weeklyProgress->hell_mode_ready = !$this->weeklyProgress->hell_mode_ready;
+        $this->weeklyProgress->hell_mode_ready = ! $this->weeklyProgress->hell_mode_ready;
         if ($this->weeklyProgress->hell_mode_ready) {
             $this->weeklyProgress->hell_mode_used = false;
         }
@@ -149,7 +160,7 @@ class Dashboard extends Component
 
     public function triggerDailyReset()
     {
-        if (!$this->user || !$this->user->is_admin) {
+        if (! $this->user || ! $this->user->is_admin) {
             abort(403, 'Unauthorized');
         }
 
@@ -160,7 +171,7 @@ class Dashboard extends Component
             $userMission->save();
         }
 
-        $workoutService = new WorkoutService();
+        $workoutService = new WorkoutService;
         $workoutService->updateWeeklyProgress($this->user);
 
         $this->loadData();
@@ -169,7 +180,7 @@ class Dashboard extends Component
 
     public function simulateNewDay()
     {
-        if (!$this->user || !$this->user->is_admin) {
+        if (! $this->user || ! $this->user->is_admin) {
             abort(403, 'Unauthorized');
         }
 
@@ -178,7 +189,7 @@ class Dashboard extends Component
             ->whereDate('date', $today)
             ->delete();
 
-        $resetService = new DailyResetService();
+        $resetService = new DailyResetService;
         $resetService->generateMissionsForUser($this->user, $today);
 
         $this->loadData();
@@ -197,7 +208,7 @@ class Dashboard extends Component
 
     public function getWorkoutTypesProperty()
     {
-        $types = \App\Models\Workout::select('type')
+        $types = Workout::select('type')
             ->whereNotNull('type')
             ->distinct()
             ->pluck('type')
@@ -246,7 +257,7 @@ class Dashboard extends Component
 
     private function getChartData()
     {
-        $query = \App\Models\WorkoutLog::where('user_id', $this->user->id);
+        $query = WorkoutLog::where('user_id', $this->user->id);
 
         if ($this->selectedType !== 'all') {
             $query->whereHas('workout', function ($q) {

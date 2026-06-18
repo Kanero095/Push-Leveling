@@ -1,13 +1,13 @@
 <?php
 
-use App\Models\User;
+use App\Livewire\Dashboard;
 use App\Models\Mission;
+use App\Models\User;
 use App\Models\UserMission;
 use App\Models\WeeklyProgress;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
-use App\Livewire\Dashboard;
 
 uses(RefreshDatabase::class);
 
@@ -46,7 +46,7 @@ test('dashboard component loads missions and user data', function () {
         ->assertSee('Test Athlete')
         ->assertSee('beginner Mode')
         ->assertSee('Daily Missions');
-        
+
     // Verify user mission was created
     expect(UserMission::where('user_id', $this->user->id)->count())->toBe(1);
 });
@@ -83,4 +83,3 @@ test('non-admin user cannot access dashboard sandbox simulation methods', functi
         ->call('simulateMissionCompletion')
         ->assertStatus(403);
 });
-

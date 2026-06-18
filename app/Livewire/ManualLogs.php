@@ -9,10 +9,12 @@ use Livewire\Component;
 class ManualLogs extends Component
 {
     public $logs = [];
-    
+
     // Form fields
     public $activityName = '';
+
     public $duration = '';
+
     public $note = '';
 
     protected $rules = [

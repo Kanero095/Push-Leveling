@@ -11,13 +11,18 @@ use Livewire\Component;
 class Workouts extends Component
 {
     public $workouts = [];
+
     public $history = [];
-    
+
     // Workout session state
     public $showModal = false;
+
     public $activeWorkout = null;
+
     public $reps = 0;
+
     public $duration = 0; // in seconds
+
     public $xpProjected = 0;
 
     protected $listeners = ['tick' => 'incrementDuration'];
@@ -71,14 +76,15 @@ class Workouts extends Component
      */
     public function calculateProjectedXp()
     {
-        if (!$this->activeWorkout) {
+        if (! $this->activeWorkout) {
             $this->xpProjected = 0;
+
             return;
         }
 
         $multiplier = $this->activeWorkout->getDifficultyMultiplier();
         $durationInMinutes = $this->duration / 60.0;
-        
+
         $this->xpProjected = (int) round(($this->reps * 0.5 + $durationInMinutes * 0.2) * $multiplier);
         $this->xpProjected = max(1, $this->xpProjected);
     }
@@ -99,16 +105,17 @@ class Workouts extends Component
     {
         if ($this->reps <= 0 && $this->duration <= 0) {
             $this->dispatch('toast', variant: 'warning', text: 'Silakan masukkan reps atau durasi latihan.');
+
             return;
         }
 
         $user = Auth::user();
-        $workoutService = new WorkoutService();
-        
+        $workoutService = new WorkoutService;
+
         $result = $workoutService->completeWorkout(
-            $user, 
-            $this->activeWorkout->id, 
-            (int) $this->reps, 
+            $user,
+            $this->activeWorkout->id,
+            (int) $this->reps,
             (int) $this->duration
         );
 
@@ -121,7 +128,7 @@ class Workouts extends Component
         if ($result['leveled_up']) {
             $msg .= " 🎉 LEVEL UP! You reached Level {$result['new_level']}!";
         }
-        
+
         $this->dispatch('toast', variant: 'success', text: $msg);
         $this->dispatch('workout-logged'); // Refresh dashboard values if embedded
     }

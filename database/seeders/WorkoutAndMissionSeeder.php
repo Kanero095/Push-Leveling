@@ -2,9 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\Mission;
 use App\Models\User;
 use App\Models\Workout;
-use App\Models\Mission;
+use App\Models\WorkoutLog;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -45,7 +46,7 @@ class WorkoutAndMissionSeeder extends Seeder
                 'reps_label' => 'reps',
                 'duration_label' => 'seconds',
             ],
-            
+
             // Sit-ups
             [
                 'name' => 'Crunch (Beginner)',
@@ -132,7 +133,7 @@ class WorkoutAndMissionSeeder extends Seeder
                 'reps_label' => 'kilometers',
                 'duration_label' => 'seconds',
             ],
-            
+
             // Swimming
             [
                 'name' => 'Recreational Swimming (Beginner)',
@@ -161,7 +162,7 @@ class WorkoutAndMissionSeeder extends Seeder
                 'reps_label' => 'meters',
                 'duration_label' => 'seconds',
             ],
-            
+
             // Jump Rope
             [
                 'name' => 'Basic Jump Rope (Beginner)',
@@ -190,7 +191,7 @@ class WorkoutAndMissionSeeder extends Seeder
                 'reps_label' => 'reps',
                 'duration_label' => 'seconds',
             ],
-            
+
             // Pull-ups
             [
                 'name' => 'Assisted Pull-ups (Beginner)',
@@ -633,11 +634,11 @@ class WorkoutAndMissionSeeder extends Seeder
             );
 
             // Seed mock category logs so they show up on filtered leaderboards
-            if (isset($userData['xp_categories']) && !\App\Models\WorkoutLog::where('user_id', $user->id)->exists()) {
+            if (isset($userData['xp_categories']) && ! WorkoutLog::where('user_id', $user->id)->exists()) {
                 foreach ($userData['xp_categories'] as $type => $xpAmount) {
                     $workout = Workout::where('type', $type)->first();
                     if ($workout) {
-                        \App\Models\WorkoutLog::create([
+                        WorkoutLog::create([
                             'user_id' => $user->id,
                             'workout_id' => $workout->id,
                             'reps' => 100,

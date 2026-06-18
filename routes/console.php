@@ -1,11 +1,14 @@
 <?php
 
+use App\Models\Notification;
+use App\Models\User;
+use App\Models\UserMission;
+use App\Services\DailyResetService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Mail;
-use Carbon\Carbon;
-use App\Services\DailyResetService;
+use Illuminate\Support\Facades\Schedule;
 
 // Inspiring quote command
 Artisan::command('inspire', function () {
@@ -15,7 +18,7 @@ Artisan::command('inspire', function () {
 // Command: Generate Daily Missions
 Artisan::command('missions:generate', function () {
     $this->info('Generating daily missions...');
-    $service = new DailyResetService();
+    $service = new DailyResetService;
     $service->generateMissionsForAllUsers(Carbon::today());
     $this->info('Daily missions generated successfully!');
 })->purpose('Generate daily missions for all users');
@@ -23,13 +26,13 @@ Artisan::command('missions:generate', function () {
 // Command: Morning Notifications (07:00)
 Artisan::command('notifications:morning', function () {
     $this->info('Sending morning notifications...');
-    $users = \App\Models\User::all();
-    
+    $users = User::all();
+
     foreach ($users as $user) {
         $message = "Halo {$user->name}! Mulai harimu dengan sehat. Selesaikan daily mission kamu hari ini untuk mendapatkan XP dan naik level!";
-        
+
         // Log to database
-        \App\Models\Notification::create([
+        Notification::create([
             'user_id' => $user->id,
             'type' => 'morning',
             'message' => $message,
@@ -41,31 +44,31 @@ Artisan::command('notifications:morning', function () {
             Mail::raw($message, function ($mail) use ($user) {
                 $mail->to($user->email)->subject('Workout Tracker - Mulai Harimu!');
             });
-        } catch (\Exception $e) {
-            \Log::error("Failed to send morning mail to {$user->email}: " . $e->getMessage());
+        } catch (Exception $e) {
+            Log::error("Failed to send morning mail to {$user->email}: ".$e->getMessage());
         }
     }
-    
+
     $this->info('Morning notifications sent.');
 })->purpose('Send morning workout reminders to all users');
 
 // Command: Evening Notifications (21:00)
 Artisan::command('notifications:evening', function () {
     $this->info('Checking and sending evening reminders...');
-    $users = \App\Models\User::all();
-    
+    $users = User::all();
+
     foreach ($users as $user) {
         // Check if user has uncompleted missions today
-        $hasUncompleted = \App\Models\UserMission::where('user_id', $user->id)
+        $hasUncompleted = UserMission::where('user_id', $user->id)
             ->whereDate('date', Carbon::today())
             ->where('is_completed', false)
             ->exists();
 
         if ($hasUncompleted) {
             $message = "Halo {$user->name}! Jangan lupa selesaikan daily mission kamu malam ini sebelum reset. Tetap konsisten!";
-            
+
             // Log to database
-            \App\Models\Notification::create([
+            Notification::create([
                 'user_id' => $user->id,
                 'type' => 'evening',
                 'message' => $message,
@@ -77,12 +80,12 @@ Artisan::command('notifications:evening', function () {
                 Mail::raw($message, function ($mail) use ($user) {
                     $mail->to($user->email)->subject('Workout Tracker - Pengingat Misi Malam');
                 });
-            } catch (\Exception $e) {
-                \Log::error("Failed to send evening mail to {$user->email}: " . $e->getMessage());
+            } catch (Exception $e) {
+                Log::error("Failed to send evening mail to {$user->email}: ".$e->getMessage());
             }
         }
     }
-    
+
     $this->info('Evening reminders processed.');
 })->purpose('Send evening reminders to users with incomplete tasks');
 

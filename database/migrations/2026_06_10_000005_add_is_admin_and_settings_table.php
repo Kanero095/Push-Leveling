@@ -1,9 +1,9 @@
 <?php
 
+use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\User;
 
 return new class extends Migration
 {
@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'is_admin')) {
+            if (! Schema::hasColumn('users', 'is_admin')) {
                 $table->boolean('is_admin')->default(false)->after('email');
             }
         });
@@ -29,7 +29,7 @@ return new class extends Migration
         try {
             User::whereIn('email', ['test@example.com', 'ze1010ro.zero@gmail.com'])
                 ->update(['is_admin' => true]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Silence if users table or model is not ready
         }
     }

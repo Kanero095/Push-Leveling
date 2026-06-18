@@ -11,9 +11,13 @@ class Settings extends Component
     use WithFileUploads;
 
     public $appName = '';
+
     public $appLogo;
+
     public $currentLogo = '';
+
     public $appBgImage;
+
     public $currentBgImage = '';
 
     protected $rules = [

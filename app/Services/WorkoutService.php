@@ -3,10 +3,10 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\Workout;
-use App\Models\WorkoutLog;
 use App\Models\UserMission;
 use App\Models\WeeklyProgress;
+use App\Models\Workout;
+use App\Models\WorkoutLog;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -112,9 +112,9 @@ class WorkoutService
             ->where('date', $today)
             ->exists();
 
-        if (!$exists) {
+        if (! $exists) {
             // Instantiate DailyResetService and generate
-            $resetService = new DailyResetService();
+            $resetService = new DailyResetService;
             $resetService->generateMissionsForUser($user, Carbon::today());
         }
     }
@@ -154,7 +154,7 @@ class WorkoutService
         // Completed daily mission >= 5 days in a week
         // Not Sunday
         if ($weeklyProgress->completed_days >= 5 && Carbon::today()->dayOfWeek !== Carbon::SUNDAY) {
-            if (!$weeklyProgress->hell_mode_used) {
+            if (! $weeklyProgress->hell_mode_used) {
                 $weeklyProgress->hell_mode_ready = true;
             }
         } else {

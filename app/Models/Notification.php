@@ -14,7 +14,15 @@ class Notification extends Model
         'type',
         'message',
         'status',
+        'is_read',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_read' => 'boolean',
+        ];
+    }
 
     public function user()
     {

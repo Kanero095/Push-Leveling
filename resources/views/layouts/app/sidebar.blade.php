@@ -24,6 +24,17 @@
                     <flux:sidebar.item icon="trophy" :href="route('leaderboard')" :current="request()->routeIs('leaderboard')" wire:navigate>
                         {{ __('Leaderboard') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="bell" :href="route('notifications')" :current="request()->routeIs('notifications')" wire:navigate>
+                        {{ __('Notifications') }}
+                        @php
+                            $unreadCount = auth()->user()->notifications()->where('is_read', false)->count();
+                        @endphp
+                        @if($unreadCount > 0)
+                            <flux:badge size="sm" variant="danger" class="ml-auto animate-pulse">
+                                {{ $unreadCount }}
+                            </flux:badge>
+                        @endif
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
 
             </flux:sidebar.nav>
@@ -114,6 +125,17 @@
                     <flux:menu.separator />
 
                     <flux:menu.radio.group>
+                        <flux:menu.item :href="route('notifications')" icon="bell" wire:navigate>
+                            {{ __('Notifications') }}
+                            @php
+                                $unreadCount = auth()->user()->notifications()->where('is_read', false)->count();
+                            @endphp
+                            @if($unreadCount > 0)
+                                <flux:badge size="sm" variant="danger" class="ml-auto">
+                                    {{ $unreadCount }}
+                                </flux:badge>
+                            @endif
+                        </flux:menu.item>
                         <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
                             {{ __('Settings') }}
                         </flux:menu.item>

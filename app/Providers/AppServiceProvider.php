@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\AppSetting;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -27,8 +30,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Dynamically load application settings
         try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('app_settings')) {
-                $appName = \App\Models\AppSetting::get('app_name');
+            if (Schema::hasTable('app_settings')) {
+                $appName = AppSetting::get('app_name');
                 if ($appName) {
                     config(['app.name' => $appName]);
                 }
@@ -38,7 +41,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         if (app()->isProduction()) {
-            \Illuminate\Support\Facades\URL::forceScheme('https');
+            URL::forceScheme('https');
         }
     }
 

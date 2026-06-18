@@ -3,16 +3,24 @@
 namespace App\Livewire;
 
 use App\Models\User;
+use App\Models\Workout;
+use App\Models\WorkoutLog;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 class Leaderboard extends Component
 {
     public $users = [];
+
     public $currentUser;
+
     public $unlockedTitles = [];
+
     public $selectedType = '';
+
     public $workoutTypes = [];
+
     public $currentUserXp = [];
 
     public static $typeLabels = [
@@ -37,9 +45,9 @@ class Leaderboard extends Component
     public function mount()
     {
         $this->currentUser = Auth::user();
-        
+
         // Get active workout types and map them to labels
-        $types = \App\Models\Workout::select('type')->distinct()->whereNotNull('type')->pluck('type')->toArray();
+        $types = Workout::select('type')->distinct()->whereNotNull('type')->pluck('type')->toArray();
         foreach ($types as $type) {
             $this->workoutTypes[$type] = self::$typeLabels[$type] ?? ucwords(str_replace('_', ' ', $type));
         }
@@ -58,10 +66,10 @@ class Leaderboard extends Component
         $this->unlockedTitles = $this->currentUser->getUnlockedTitles();
 
         // Fetch logged-in user's XP per workout type
-        $this->currentUserXp = \App\Models\WorkoutLog::where('user_id', $this->currentUser->id)
+        $this->currentUserXp = WorkoutLog::where('user_id', $this->currentUser->id)
             ->join('workouts', 'workout_logs.workout_id', '=', 'workouts.id')
             ->groupBy('workouts.type')
-            ->select('workouts.type', \Illuminate\Support\Facades\DB::raw('SUM(workout_logs.xp_earned) as total_xp'))
+            ->select('workouts.type', DB::raw('SUM(workout_logs.xp_earned) as total_xp'))
             ->pluck('total_xp', 'workouts.type')
             ->toArray();
 
@@ -91,7 +99,7 @@ class Leaderboard extends Component
         if ($title === '' || in_array($title, $this->unlockedTitles)) {
             $this->currentUser->title = $title === '' ? null : $title;
             $this->currentUser->save();
-            
+
             $this->loadData();
             $this->dispatch('toast', variant: 'success', text: 'Gelar/Title profil berhasil diubah.');
         } else {

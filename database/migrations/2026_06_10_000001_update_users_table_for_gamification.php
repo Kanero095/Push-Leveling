@@ -12,19 +12,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'xp_total')) {
+            if (! Schema::hasColumn('users', 'xp_total')) {
                 $table->unsignedInteger('xp_total')->default(0)->after('email');
             }
-            if (!Schema::hasColumn('users', 'level')) {
+            if (! Schema::hasColumn('users', 'level')) {
                 $table->unsignedInteger('level')->default(1)->after('xp_total');
             }
-            if (!Schema::hasColumn('users', 'user_level')) {
+            if (! Schema::hasColumn('users', 'user_level')) {
                 $table->string('user_level')->default('beginner')->after('level'); // beginner, intermediate, advanced
             }
-            if (!Schema::hasColumn('users', 'phone')) {
+            if (! Schema::hasColumn('users', 'phone')) {
                 $table->string('phone')->nullable()->after('user_level');
             }
-            if (!Schema::hasColumn('users', 'title')) {
+            if (! Schema::hasColumn('users', 'title')) {
                 $table->string('title')->nullable()->after('phone');
             }
         });

@@ -93,6 +93,7 @@ class User extends Authenticatable implements PasskeyUser
                 break;
             }
         }
+
         return $level;
     }
 
@@ -103,14 +104,14 @@ class User extends Authenticatable implements PasskeyUser
     {
         $oldLevel = $this->level;
         $this->xp_total += $xp;
-        
+
         $newLevel = self::calculateLevelFromXp($this->xp_total);
         $leveledUp = $newLevel > $oldLevel;
-        
+
         if ($leveledUp) {
             $this->level = $newLevel;
         }
-        
+
         $this->save();
 
         return [
@@ -129,14 +130,14 @@ class User extends Authenticatable implements PasskeyUser
         $currentLevel = $this->level;
         $prevLevelThreshold = $currentLevel == 1 ? 0 : 100 * pow($currentLevel - 1, 1.5);
         $nextLevelThreshold = 100 * pow($currentLevel, 1.5);
-        
+
         $xpInCurrentLevel = $this->xp_total - $prevLevelThreshold;
         $xpNeededForNextLevel = $nextLevelThreshold - $prevLevelThreshold;
-        
+
         return [
             'current' => max(0, (int) $xpInCurrentLevel),
             'target' => (int) $xpNeededForNextLevel,
-            'percentage' => min(100, max(0, $xpNeededForNextLevel > 0 ? round(($xpInCurrentLevel / $xpNeededForNextLevel) * 100) : 0))
+            'percentage' => min(100, max(0, $xpNeededForNextLevel > 0 ? round(($xpInCurrentLevel / $xpNeededForNextLevel) * 100) : 0)),
         ];
     }
 
@@ -146,15 +147,34 @@ class User extends Authenticatable implements PasskeyUser
     public function getTier(): string
     {
         $level = $this->level;
-        if ($level <= 5) return 'Beginner';
-        if ($level <= 10) return 'Rookie';
-        if ($level <= 15) return 'Trainee';
-        if ($level <= 20) return 'Fighter';
-        if ($level <= 30) return 'Warrior';
-        if ($level <= 40) return 'Elite';
-        if ($level <= 50) return 'Champion';
-        if ($level <= 70) return 'Master';
-        if ($level <= 90) return 'Grandmaster';
+        if ($level <= 5) {
+            return 'Beginner';
+        }
+        if ($level <= 10) {
+            return 'Rookie';
+        }
+        if ($level <= 15) {
+            return 'Trainee';
+        }
+        if ($level <= 20) {
+            return 'Fighter';
+        }
+        if ($level <= 30) {
+            return 'Warrior';
+        }
+        if ($level <= 40) {
+            return 'Elite';
+        }
+        if ($level <= 50) {
+            return 'Champion';
+        }
+        if ($level <= 70) {
+            return 'Master';
+        }
+        if ($level <= 90) {
+            return 'Grandmaster';
+        }
+
         return 'Legend';
     }
 
@@ -165,13 +185,23 @@ class User extends Authenticatable implements PasskeyUser
     {
         $level = $this->level;
         $titles = [];
-        
-        if ($level >= 10) $titles[] = 'Awakened';
-        if ($level >= 20) $titles[] = 'Relentless';
-        if ($level >= 40) $titles[] = 'Iron Body';
-        if ($level >= 60) $titles[] = 'Unbreakable';
-        if ($level >= 100) $titles[] = 'Limit Breaker';
-        
+
+        if ($level >= 10) {
+            $titles[] = 'Awakened';
+        }
+        if ($level >= 20) {
+            $titles[] = 'Relentless';
+        }
+        if ($level >= 40) {
+            $titles[] = 'Iron Body';
+        }
+        if ($level >= 60) {
+            $titles[] = 'Unbreakable';
+        }
+        if ($level >= 100) {
+            $titles[] = 'Limit Breaker';
+        }
+
         return $titles;
     }
 
@@ -181,7 +211,7 @@ class User extends Authenticatable implements PasskeyUser
     public function getAvatarUrlAttribute(): ?string
     {
         return $this->profile_photo_path
-            ? asset('storage/' . $this->profile_photo_path)
+            ? asset('storage/'.$this->profile_photo_path)
             : null;
     }
 }

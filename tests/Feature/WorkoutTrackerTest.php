@@ -1,12 +1,12 @@
 <?php
 
-use App\Models\User;
-use App\Models\Workout;
 use App\Models\Mission;
+use App\Models\User;
 use App\Models\UserMission;
 use App\Models\WeeklyProgress;
-use App\Services\WorkoutService;
+use App\Models\Workout;
 use App\Services\DailyResetService;
+use App\Services\WorkoutService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -55,7 +55,7 @@ beforeEach(function () {
 });
 
 test('xp is calculated correctly based on reps, duration and difficulty', function () {
-    $workoutService = new WorkoutService();
+    $workoutService = new WorkoutService;
 
     // 20 reps, 60 seconds (1 minute), Beginner workout (1.0x multiplier)
     // Formula: (20 * 0.5 + 1.0 * 0.2) * 1.0 = (10 + 0.2) * 1.0 = 10.2 => round to 10
@@ -66,7 +66,7 @@ test('xp is calculated correctly based on reps, duration and difficulty', functi
 });
 
 test('advanced difficulty workout has 2.0x multiplier applied to XP', function () {
-    $workoutService = new WorkoutService();
+    $workoutService = new WorkoutService;
 
     // 5 reps (km), 600 seconds (10 minutes), Advanced workout (2.0x multiplier)
     // Formula: (5 * 0.5 + 10.0 * 0.2) * 2.0 = (2.5 + 2) * 2.0 = 4.5 * 2.0 = 9 => 9 XP
@@ -96,7 +96,7 @@ test('user levels up when crossing total XP threshold', function () {
 });
 
 test('workout updates corresponding daily mission and awards partial XP', function () {
-    $workoutService = new WorkoutService();
+    $workoutService = new WorkoutService;
     $workoutService->ensureMissionsExistForToday($this->user);
 
     // Initial state: push-up mission progress is 0/100, base_xp = 100
@@ -133,7 +133,7 @@ test('workout updates corresponding daily mission and awards partial XP', functi
 });
 
 test('mission progress and partial XP is capped at 100% target snapshot', function () {
-    $workoutService = new WorkoutService();
+    $workoutService = new WorkoutService;
     $workoutService->ensureMissionsExistForToday($this->user);
 
     // User does a huge pushup session of 150 pushups (target is 100)
@@ -156,26 +156,26 @@ test('mission progress and partial XP is capped at 100% target snapshot', functi
 });
 
 test('hell mode activates tomorrow when completing daily missions for 5 days', function () {
-    $workoutService = new WorkoutService();
-    $resetService = new DailyResetService();
+    $workoutService = new WorkoutService;
+    $resetService = new DailyResetService;
 
     // We need 5 completed days in the week.
     // Let's mock completions for Mon, Tue, Wed, Thu, Fri.
     // Monday starts on:
     $monday = Carbon::today()->startOfWeek(Carbon::MONDAY);
-    
+
     // Simulate completions for 5 days
     for ($i = 0; $i < 5; $i++) {
         $date = $monday->copy()->addDays($i);
-        
+
         // Generate missions for that day
         $resetService->generateMissionsForUser($this->user, $date);
-        
+
         // Mark them all as completed
         UserMission::where('user_id', $this->user->id)
             ->whereDate('date', $date)
             ->update(['current_progress' => 100, 'is_completed' => true]);
-        
+
         // For testing, update weekly progress manually or via workout service helper
         // Since we are completing them, we run the weekly progress updater
         // We travel time to that day
