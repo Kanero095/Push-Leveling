@@ -55,19 +55,23 @@ class CronController extends Controller
         }
 
         try {
-            Log::info("Running artisan command via webhook: {$command}");
+            Log::info("Dispatching artisan command to background via webhook: {$command}");
 
-            // Execute the Artisan command
-            $exitCode = Artisan::call($command);
-            $output = Artisan::output();
+            $phpBinary = '"' . PHP_BINARY . '"';
+            $artisanPath = '"' . base_path('artisan') . '"';
+            $fullCommand = "{$phpBinary} {$artisanPath} {$command}";
 
-            Log::info("Artisan command {$command} finished with exit code {$exitCode}");
+            // Run asynchronously based on OS
+            if (substr(php_uname(), 0, 7) == "Windows") {
+                pclose(popen("start /B \"\" {$fullCommand} >> " . storage_path('logs/laravel.log') . " 2>&1", "r"));
+            } else {
+                exec("{$fullCommand} >> " . storage_path('logs/laravel.log') . " 2>&1 &");
+            }
 
             return response()->json([
                 'status' => 'success',
                 'command' => $command,
-                'exit_code' => $exitCode,
-                'output' => trim($output),
+                'message' => 'Command successfully dispatched to background.',
             ]);
         } catch (\Exception $e) {
             Log::error("Failed to run artisan command {$command} via webhook: ".$e->getMessage());
