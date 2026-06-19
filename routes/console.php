@@ -93,5 +93,5 @@ Artisan::command('notifications:evening', function () {
 // --- Scheduling Definitions ---
 
 Schedule::command('missions:generate')->dailyAt('00:00');
-Schedule::command('notifications:morning')->dailyAt('11:15');
+Schedule::command('notifications:morning')->dailyAt('11:25');
 Schedule::command('notifications:evening')->dailyAt('20:00');
