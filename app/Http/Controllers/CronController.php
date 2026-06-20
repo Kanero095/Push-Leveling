@@ -45,6 +45,7 @@ class CronController extends Controller
             'notifications:morning',
             'notifications:evening',
             'missions:generate',
+            'mail:diagnose',
         ];
 
         if (! in_array($command, $allowedCommands)) {
@@ -57,8 +58,14 @@ class CronController extends Controller
         try {
             Log::info("Running artisan command via webhook: {$command}");
 
+            // Set up command parameters (e.g. for mail:diagnose)
+            $parameters = [];
+            if ($command === 'mail:diagnose' && $request->has('email')) {
+                $parameters['--email'] = $request->query('email');
+            }
+
             // Run command synchronously in-process
-            $exitCode = Artisan::call($command);
+            $exitCode = Artisan::call($command, $parameters);
             $output = Artisan::output();
 
             Log::info("Artisan command {$command} finished with exit code {$exitCode}. Output: " . trim($output));
