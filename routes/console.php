@@ -115,7 +115,7 @@ Artisan::command('mail:diagnose {--email= : Email tujuan untuk tes pengiriman}',
     $this->line("SMTP Username: " . ($username ?: 'NULL'));
     
     if (empty($password)) {
-        $this->error("SMTP Password: KOSONG (Belum dikonfigurasi!)");
+        $this->error("SMTP Password: KOSONG");
     } else {
         $maskedPassword = strlen($password) > 4 
             ? substr($password, 0, 2) . str_repeat('*', strlen($password) - 4) . substr($password, -2)
@@ -123,26 +123,53 @@ Artisan::command('mail:diagnose {--email= : Email tujuan untuk tes pengiriman}',
         $this->info("SMTP Password: Terisi ({$maskedPassword}, panjang: " . strlen($password) . ")");
     }
     
+    // Resend configuration
+    $resendKey = config('services.resend.key') ?: env('RESEND_API_KEY');
+    if (empty($resendKey)) {
+        $this->error("Resend API Key: KOSONG");
+    } else {
+        $maskedKey = strlen($resendKey) > 10 
+            ? substr($resendKey, 0, 5) . str_repeat('*', strlen($resendKey) - 10) . substr($resendKey, -5)
+            : '**********';
+        $this->info("Resend API Key: Terisi ({$maskedKey}, panjang: " . strlen($resendKey) . ")");
+    }
+
     $this->line("From Address: " . ($fromAddress ?: 'NULL'));
     $this->line("From Name: " . ($fromName ?: 'NULL'));
     
     $this->info("\n=== TES KONEKSI JARINGAN (fsockopen) ===");
+    
+    // Check SMTP connection if configured or default mailer is SMTP
     if (!empty($host) && !empty($port)) {
-        $this->line("Menghubungkan ke {$host}:{$port}...");
+        $this->line("Menghubungkan ke SMTP Server {$host}:{$port}...");
         $startTime = microtime(true);
         $socket = @fsockopen($host, $port, $errno, $errstr, 5.0);
         $endTime = microtime(true);
         $duration = round(($endTime - $startTime) * 1000, 2);
 
         if ($socket) {
-            $this->info("Koneksi TCP Berhasil! Terkoneksi dalam {$duration}ms.");
+            $this->info("Koneksi TCP SMTP Berhasil! Terkoneksi dalam {$duration}ms.");
             fclose($socket);
         } else {
             $this->error("Gagal terhubung ke host SMTP! Error #{$errno}: {$errstr} (Waktu tunggu: {$duration}ms)");
             $this->error("Catatan: Render memblokir port 25. Pastikan menggunakan port 587 (TLS) atau 465 (SSL).");
         }
     } else {
-        $this->error("Host atau Port SMTP kosong, melewati tes koneksi.");
+        $this->line("Detail SMTP tidak lengkap, melewati tes koneksi SMTP.");
+    }
+    
+    // Always check Resend API connection (port 443 HTTPS)
+    $this->line("Menghubungkan ke Resend API (api.resend.com:443)...");
+    $startTime = microtime(true);
+    $socket = @fsockopen('api.resend.com', 443, $errno, $errstr, 5.0);
+    $endTime = microtime(true);
+    $duration = round(($endTime - $startTime) * 1000, 2);
+
+    if ($socket) {
+        $this->info("Koneksi ke Resend API Berhasil! Terkoneksi dalam {$duration}ms.");
+        fclose($socket);
+    } else {
+        $this->error("Gagal terhubung ke Resend API! Error #{$errno}: {$errstr} (Waktu tunggu: {$duration}ms)");
     }
     
     $targetEmail = $this->option('email') ?: $fromAddress;
@@ -173,5 +200,5 @@ Artisan::command('mail:diagnose {--email= : Email tujuan untuk tes pengiriman}',
 // --- Scheduling Definitions ---
 
 Schedule::command('missions:generate')->dailyAt('00:00');
-Schedule::command('notifications:morning')->dailyAt('09:43');
+Schedule::command('notifications:morning')->dailyAt('10:30');
 Schedule::command('notifications:evening')->dailyAt('20:00');
