@@ -123,15 +123,15 @@ Artisan::command('mail:diagnose {--email= : Email tujuan untuk tes pengiriman}',
         $this->info("SMTP Password: Terisi ({$maskedPassword}, panjang: " . strlen($password) . ")");
     }
     
-    // Resend configuration
-    $resendKey = config('services.resend.key') ?: env('RESEND_API_KEY');
-    if (empty($resendKey)) {
-        $this->error("Resend API Key: KOSONG");
+    // Brevo configuration
+    $brevoKey = config('services.brevo.key') ?: env('BREVO_API_KEY');
+    if (empty($brevoKey)) {
+        $this->error("Brevo API Key: KOSONG");
     } else {
-        $maskedKey = strlen($resendKey) > 10 
-            ? substr($resendKey, 0, 5) . str_repeat('*', strlen($resendKey) - 10) . substr($resendKey, -5)
+        $maskedKey = strlen($brevoKey) > 10 
+            ? substr($brevoKey, 0, 5) . str_repeat('*', strlen($brevoKey) - 10) . substr($brevoKey, -5)
             : '**********';
-        $this->info("Resend API Key: Terisi ({$maskedKey}, panjang: " . strlen($resendKey) . ")");
+        $this->info("Brevo API Key: Terisi ({$maskedKey}, panjang: " . strlen($brevoKey) . ")");
     }
 
     $this->line("From Address: " . ($fromAddress ?: 'NULL'));
@@ -158,18 +158,18 @@ Artisan::command('mail:diagnose {--email= : Email tujuan untuk tes pengiriman}',
         $this->line("Detail SMTP tidak lengkap, melewati tes koneksi SMTP.");
     }
     
-    // Always check Resend API connection (port 443 HTTPS)
-    $this->line("Menghubungkan ke Resend API (api.resend.com:443)...");
+    // Always check Brevo API connection (port 443 HTTPS)
+    $this->line("Menghubungkan ke Brevo API (api.brevo.com:443)...");
     $startTime = microtime(true);
-    $socket = @fsockopen('api.resend.com', 443, $errno, $errstr, 5.0);
+    $socket = @fsockopen('api.brevo.com', 443, $errno, $errstr, 5.0);
     $endTime = microtime(true);
     $duration = round(($endTime - $startTime) * 1000, 2);
 
     if ($socket) {
-        $this->info("Koneksi ke Resend API Berhasil! Terkoneksi dalam {$duration}ms.");
+        $this->info("Koneksi ke Brevo API Berhasil! Terkoneksi dalam {$duration}ms.");
         fclose($socket);
     } else {
-        $this->error("Gagal terhubung ke Resend API! Error #{$errno}: {$errstr} (Waktu tunggu: {$duration}ms)");
+        $this->error("Gagal terhubung ke Brevo API! Error #{$errno}: {$errstr} (Waktu tunggu: {$duration}ms)");
     }
     
     $targetEmail = $this->option('email') ?: $fromAddress;

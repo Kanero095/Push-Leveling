@@ -43,6 +43,17 @@ class AppServiceProvider extends ServiceProvider
         if (app()->isProduction()) {
             URL::forceScheme('https');
         }
+
+        // Register custom mailer for Brevo API (port 443 HTTPS)
+        $this->app['mail.manager']->extend('brevo', function ($config) {
+            return (new \Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoTransportFactory)->create(
+                new \Symfony\Component\Mailer\Transport\Dsn(
+                    'brevo+api',
+                    'default',
+                    config('services.brevo.key')
+                )
+            );
+        });
     }
 
     /**
