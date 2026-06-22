@@ -200,5 +200,5 @@
     // --- Scheduling Definitions ---
 
     Schedule::command('missions:generate')->dailyAt('00:00');
-    Schedule::command('notifications:morning')->dailyAt('15:15');
+    Schedule::command('notifications:morning')->dailyAt('06:00');
     Schedule::command('notifications:evening')->dailyAt('20:00');
