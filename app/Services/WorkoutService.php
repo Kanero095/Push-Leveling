@@ -134,7 +134,7 @@ class WorkoutService
             ->whereBetween('date', [$weekStart, $weekEnd])
             ->select('date')
             ->groupBy('date')
-            ->havingRaw('COUNT(*) = SUM(CASE WHEN is_completed = 1 THEN 1 ELSE 0 END)')
+            ->havingRaw('COUNT(*) = SUM(CASE WHEN is_completed THEN 1 ELSE 0 END)')
             ->get()
             ->count();
 
